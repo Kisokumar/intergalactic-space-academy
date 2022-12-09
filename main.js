@@ -1,4 +1,5 @@
 import Phaser, { Game } from "phaser";
+
 let started = false;
 let starsText;
 let scoreText;
@@ -12,9 +13,14 @@ let rotateValue;
 let x;
 let y;
 let spaceKey;
-let xKey;
-let zKey;
+let shiftKey;
+let eKey;
 let rKey;
+
+let wKey;
+let aKey;
+let dKey;
+
 var gamepad;
 let meteors;
 let stars;
@@ -24,6 +30,7 @@ let count;
 let starCount;
 let meteorRotateValue = 0.03;
 let speed;
+let emitter;
 let mspeed;
 let displaySpeed;
 let timeLeft = 0;
@@ -75,20 +82,24 @@ var config = {
 new Game(config);
 
 function preload() {
-  this.load.image("background", "/bg.jpeg");
-  this.load.image("rocket1", "/rocket.png");
-  this.load.image("meteor", "/meteor.png");
-  this.load.image("meteorr", "/meteorr.png");
-  this.load.image("star", "/star.png");
-  this.load.atlas("rocketsprite", "/rocket-sprite.png", "/rocket-sprite.json");
+  this.load.image("background", "bg.jpeg");
+  this.load.image("rocket1", "rocket.png");
+  this.load.image("meteor", "meteor.png");
+  this.load.image("smoke", "smoke.png");
+  this.load.image("star", "star.png");
+  this.load.atlas("rocketsprite", "rocket-sprite.png", "rocket-sprite.json");
   cursors = this.input.keyboard.createCursorKeys();
 }
 
 function create() {
   spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-  xKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
-  zKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
+  shiftKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+  eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
   rKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+
+  wKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+  aKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+  dKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 
   const screenCenterX =
     this.cameras.main.worldView.x + this.cameras.main.width / 2;
@@ -126,6 +137,16 @@ function create() {
   rocket1.Health = 100000;
   rocket1.Fuel = 100000;
   rocket1.body.setSize(90, 202);
+
+  var particles = this.add.particles("smoke");
+
+  emitter = particles.createEmitter({
+    speed: 20,
+    scale: { start: 0.3, end: 1.34 },
+    visible: false,
+  });
+
+  // emitter.stopFollow(rocket1);
 
   // rocket1.body.setMaxSpeed(800);
   // rocket1.setCollideWorldBounds(true);
@@ -348,8 +369,14 @@ function create() {
 }
 
 class PhysicsEngine {
+  fireBullets() {
+    rocket1.fuel = rocket1.fuel;
+  }
   // main thruster
   fireBooster(strength = 1) {
+    console.log(emitter);
+    emitter.visible = true;
+    emitter.startFollow(rocket1);
     if (strength > 3) {
       rocket1.Fuel -= 32 * strength;
       fuelText.setText(`Fuel: ${(rocket1.Fuel / 1000).toFixed(2)}%`);
@@ -396,10 +423,12 @@ class PhysicsEngine {
     } else if (rocket1.Fuel < 80000) {
       fuelText.setFill("#FFFF00");
     }
-    if (rotateValue < -0.02 || rocket1.body.speed > 400) {
-      rotateValue += 0.0029 * strength;
-    }
-    rotateValue += 0.0014 * strength;
+    // if (rotateValue < -0.02 || rocket1.body.speed > 400) {
+    //   rotateValue += 0.0029 * strength;
+    // }
+    // rotateValue += 0.0014 * strength;
+    rocket1.rotation += 0.1;
+    rotateValue = 0.008 * strength;
   }
 
   turnLeft(strength = 1) {
@@ -415,17 +444,20 @@ class PhysicsEngine {
     } else if (rocket1.Fuel < 80000) {
       fuelText.setFill("#FFFF00");
     }
-    if (rotateValue > 0.02) {
-      if (strength != 1) {
-        rotateValue -= 0.0019 * strength;
-      } else {
-        rotateValue -= 0.0019;
-      }
-    }
-    rotateValue += -0.0014 * strength;
+    // if (rotateValue > 0.02) {
+    //   if (strength != 1) {
+    //     rotateValue -= 0.0019 * strength;
+    //   } else {
+    //     rotateValue -= 0.0019;
+    //   }
+    // }
+    // rotateValue += -0.0014 * strength;
+    rotateValue = -0.008 * strength;
+    rocket1.rotation -= 0.1;
   }
 
   default() {
+    emitter.stopFollow(rocket1);
     rocket1.anims.play("default", true);
   }
 }
@@ -452,7 +484,6 @@ function logSpeed(speed) {
 
 function update() {
   if (started) {
-    console.log(time);
     if (time < 65) {
       time += 0.07;
     }
@@ -514,9 +545,11 @@ function update() {
     }
 
     if (gamepad.leftStick) {
-      Rocket1PhysicsEngine.turnLeft(
-        leftStickSensitivity * -1 * gamepad.leftStick.x * 1.9
-      );
+      // Rocket1PhysicsEngine.turnLeft( leftStickSensitivity * -1 * gamepad.leftStick.x * 1.9);
+      if (gamepad.leftStick.angle() != 0) {
+        rotateValue = 0;
+        rocket1.rotation = gamepad.leftStick.angle() + Math.PI / 2;
+      }
     }
 
     if (gamepad.B) {
@@ -548,10 +581,10 @@ function update() {
 
     // keyboard
   } else {
-    if (cursors.right.isDown) {
+    if (cursors.right.isDown || dKey.isDown) {
       Rocket1PhysicsEngine.turnRight();
     }
-    if (cursors.left.isDown) {
+    if (cursors.left.isDown || aKey.isDown) {
       Rocket1PhysicsEngine.turnLeft();
     }
     //shoot
@@ -560,7 +593,7 @@ function update() {
     }
 
     // teleport
-    if (zKey.isDown) {
+    if (eKey.isDown) {
       if (time.toFixed(0) > 60) {
         rocket1.setPosition(rng(0, 1500), rng(0, 1500));
         time = 0;
@@ -569,10 +602,10 @@ function update() {
     if (rKey.isDown) {
       location.reload();
     }
-    if (xKey.isDown || cursors.up.isDown) {
-      if (xKey.isDown) {
+    if (shiftKey.isDown || cursors.up.isDown || wKey.isDown) {
+      if (shiftKey.isDown) {
         Rocket1PhysicsEngine.fireBooster(7.5);
-      } else if (cursors.up.isDown) {
+      } else if (cursors.up.isDown || wKey.isDown) {
         Rocket1PhysicsEngine.fireBooster(1);
       }
     } else {
