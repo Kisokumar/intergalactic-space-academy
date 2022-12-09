@@ -75,12 +75,12 @@ var config = {
 new Game(config);
 
 function preload() {
-  this.load.image("background", "/bg.jpeg");
-  this.load.image("rocket1", "/rocket.png");
-  this.load.image("meteor", "/meteor.png");
-  this.load.image("meteorr", "/meteorr.png");
-  this.load.image("star", "/star.png");
-  this.load.atlas("rocketsprite", "/rocket-sprite.png", "/rocket-sprite.json");
+  this.load.image("background", "bg.jpeg");
+  this.load.image("rocket1", "rocket.png");
+  this.load.image("meteor", "meteor.png");
+  this.load.image("meteorr", "meteorr.png");
+  this.load.image("star", "star.png");
+  this.load.atlas("rocketsprite", "rocket-sprite.png", "rocket-sprite.json");
   cursors = this.input.keyboard.createCursorKeys();
 }
 
@@ -396,10 +396,12 @@ class PhysicsEngine {
     } else if (rocket1.Fuel < 80000) {
       fuelText.setFill("#FFFF00");
     }
-    if (rotateValue < -0.02 || rocket1.body.speed > 400) {
-      rotateValue += 0.0029 * strength;
-    }
-    rotateValue += 0.0014 * strength;
+    // if (rotateValue < -0.02 || rocket1.body.speed > 400) {
+    //   rotateValue += 0.0029 * strength;
+    // }
+    // rotateValue += 0.0014 * strength;
+    rocket1.rotation += 0.04;
+    rotateValue = 0.008 * strength;
   }
 
   turnLeft(strength = 1) {
@@ -415,14 +417,16 @@ class PhysicsEngine {
     } else if (rocket1.Fuel < 80000) {
       fuelText.setFill("#FFFF00");
     }
-    if (rotateValue > 0.02) {
-      if (strength != 1) {
-        rotateValue -= 0.0019 * strength;
-      } else {
-        rotateValue -= 0.0019;
-      }
-    }
-    rotateValue += -0.0014 * strength;
+    // if (rotateValue > 0.02) {
+    //   if (strength != 1) {
+    //     rotateValue -= 0.0019 * strength;
+    //   } else {
+    //     rotateValue -= 0.0019;
+    //   }
+    // }
+    // rotateValue += -0.0014 * strength;
+    rotateValue = -0.008 * strength;
+    rocket1.rotation -= 0.04;
   }
 
   default() {
@@ -452,7 +456,6 @@ function logSpeed(speed) {
 
 function update() {
   if (started) {
-    console.log(time);
     if (time < 65) {
       time += 0.07;
     }
@@ -514,9 +517,11 @@ function update() {
     }
 
     if (gamepad.leftStick) {
-      Rocket1PhysicsEngine.turnLeft(
-        leftStickSensitivity * -1 * gamepad.leftStick.x * 1.9
-      );
+      // Rocket1PhysicsEngine.turnLeft( leftStickSensitivity * -1 * gamepad.leftStick.x * 1.9);
+      if (gamepad.leftStick.angle() != 0) {
+        rotateValue = 0;
+        rocket1.rotation = gamepad.leftStick.angle() + Math.PI / 2;
+      }
     }
 
     if (gamepad.B) {
