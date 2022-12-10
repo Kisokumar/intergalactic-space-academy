@@ -86,6 +86,7 @@ function preload() {
   this.load.image("rocket1", "rocket.png");
   this.load.image("meteor", "meteor.png");
   this.load.image("meteorr", "meteorr.png");
+  this.load.image("smoke", "smoke.png");
   this.load.image("star", "star.png");
   this.load.atlas("rocketsprite", "rocket-sprite.png", "rocket-sprite.json");
   cursors = this.input.keyboard.createCursorKeys();
@@ -139,6 +140,7 @@ function create() {
   rocket1.body.setSize(90, 202);
 
   var particles = this.add.particles("smoke");
+  console.log(particles);
 
   emitter = particles.createEmitter({
     speed: 20,
@@ -427,7 +429,7 @@ class PhysicsEngine {
     //   rotateValue += 0.0029 * strength;
     // }
     // rotateValue += 0.0014 * strength;
-    rocket1.rotation += 0.04;
+    rocket1.rotation += 0.1;
     rotateValue = 0.008 * strength;
   }
 
@@ -453,7 +455,7 @@ class PhysicsEngine {
     // }
     // rotateValue += -0.0014 * strength;
     rotateValue = -0.008 * strength;
-    rocket1.rotation -= 0.04;
+    rocket1.rotation -= 0.1;
   }
 
   default() {
